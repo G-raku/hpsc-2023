@@ -7,7 +7,6 @@
                               std::transform(omp_out.begin(), omp_out.end(), omp_in.begin(), omp_out.begin(), std::plus<int>())) \
                     initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
 
-void print_vec(std::vector<int>);
 std::vector<int> scan(std::vector<int>);
 
 int main() {
@@ -44,13 +43,6 @@ int main() {
 
   for (int i=0; i<n; i++) {
     printf("%d ",key[i]);
-  }
-  printf("\n");
-}
-
-void print_vec(std::vector<int> vec) {
-  for (int i=0; i<vec.size(); i++) {
-    printf("%d ", vec[i]);
   }
   printf("\n");
 }
