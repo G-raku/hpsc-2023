@@ -7,8 +7,8 @@
 
 #include <chrono>
 
-#include "./matplotlibcpp.h"
-namespace plt = matplotlibcpp;
+// #include "./matplotlibcpp.h"
+// namespace plt = matplotlibcpp;
 
 typedef std::vector<std::vector<double>> matrix;
 
@@ -29,7 +29,7 @@ std::vector<T> flatten_matrix(std::vector<std::vector<T>> const &vec) {
 int main() {
     int nx = 41;
     int ny = 41;
-    int nt = 15000;
+    int nt = 10000;
     int nit = 50;
     double dx = 2. / (nx - 1);
     double dy = 2. / (ny - 1);
@@ -39,17 +39,17 @@ int main() {
 
     double time_sum = 0;
 
-    std::vector<double> x(ny*nx);
-    std::vector<double> y(ny*nx);
-    matrix X(ny, std::vector<double>(nx));
-    matrix Y(ny, std::vector<double>(nx));
-    for (int j=0; j<ny; ++j) {
-        #pragma omp parallel for
-        for (int i=0; i<nx; ++i) {
-            x[j*nx+i] = X[j][i] = dx*j;
-            y[j*nx+i] = Y[j][i] = dy*i;
-        }
-    }
+    // std::vector<double> x(ny*nx);
+    // std::vector<double> y(ny*nx);
+    // matrix X(ny, std::vector<double>(nx));
+    // matrix Y(ny, std::vector<double>(nx));
+    // for (int j=0; j<ny; ++j) {
+    //     #pragma omp parallel for
+    //     for (int i=0; i<nx; ++i) {
+    //         x[j*nx+i] = X[j][i] = dx*j;
+    //         y[j*nx+i] = Y[j][i] = dy*i;
+    //     }
+    // }
 
     matrix u(ny, std::vector<double>(nx));
     matrix v(ny, std::vector<double>(nx));
@@ -119,19 +119,19 @@ int main() {
         }
         
         auto end = std::chrono::system_clock::now();
-        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+        auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
         time_sum += time;
-        if (n%50 == 0) {
+        if (n%1000 == 0) {
             std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             printf("timestep: %5d; %s", n, std::ctime(&now));
-            printf("time: %.2f [msec]\n", time_sum/50);
+            printf("time: %.3f [ms]\n", time_sum/1000/1000);
             time_sum = 0;
         }
         
         // plt::contourf(X, Y, p, alpha=0.5, cmap=plt::cm.coolwarm);
-        plt::quiver(y, x, flatten_matrix(u), flatten_matrix(v));
-        plt::pause(.01);
-        plt::clf();
+        // plt::quiver(y, x, flatten_matrix(u), flatten_matrix(v));
+        // plt::pause(.01);
+        // plt::clf();
     }
-    plt::show();
+    // plt::show();
 } 
