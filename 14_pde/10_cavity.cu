@@ -4,7 +4,7 @@
 
 #include <chrono>
 
-__global__ void calc_b(double *u, double *v, double *p, double *b, double dx, double dy, double dt, double rho, double nu) {
+__global__ void calc_b(double *u, double *v, double *b, double dx, double dy, double dt, double rho) {
     int j = blockIdx.x;
     int i = threadIdx.x;
     int ny = blockDim.x;
@@ -18,7 +18,7 @@ __global__ void calc_b(double *u, double *v, double *p, double *b, double dx, do
     );
 }
 
-__global__ void calc_p(double *u, double *v, double *p, double *b, double *pn, double dx, double dy, double dt, double rho, double nu) {
+__global__ void calc_p(double *p, double *b, double *pn, double dx, double dy) {
     int j = blockIdx.x;
     int i = threadIdx.x;
     int ny = blockDim.x;
@@ -37,7 +37,7 @@ __global__ void calc_p(double *u, double *v, double *p, double *b, double *pn, d
     p[(ny-1)*ny+i] = 0;
 }
 
-__global__ void calc_uv(double *u, double *v, double *p, double *b, double *un, double *vn, double dx, double dy, double dt, double rho, double nu) {
+__global__ void calc_uv(double *u, double *v, double *p, double *un, double *vn, double dx, double dy, double dt, double rho, double nu) {
     int j = blockIdx.x;
     int i = threadIdx.x;
     int ny = blockDim.x;
@@ -71,15 +71,15 @@ __global__ void calc_uv(double *u, double *v, double *p, double *b, double *un, 
 int main() {
     double time_sum = 0;
 
-    int nx = 41;
-    int ny = 41;
-    int nt = 10000;
-    int nit = 50;
-    double dx = 2. / (nx - 1);
-    double dy = 2. / (ny - 1);
-    double dt = .01;
-    double rho = 1.;
-    double nu = .02;
+    const int nx = 41;
+    const int ny = 41;
+    const int nt = 10000;
+    const int nit = 50;
+    const double dx = 2. / (nx - 1);
+    const double dy = 2. / (ny - 1);
+    const double dt = .01;
+    const double rho = 1.;
+    const double nu = .02;
 
     double *d_u, *d_v, *d_p, *d_b;
     double *u  , *v  , *p  , *b  ;
@@ -103,23 +103,15 @@ int main() {
         cudaMemcpy(d_u, u, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(d_v, v, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(d_p, p, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
-        calc_b<<<ny, nx>>>(d_u, d_v, d_p, d_b, dx, dy, dt, rho, nu);
+        calc_b<<<ny, nx>>>(d_u, d_v, d_p, dx, dy, dt, rho);
         cudaDeviceSynchronize();
         cudaMemcpy(b, d_b, ny*nx*sizeof(double), cudaMemcpyDeviceToHost);
-        // for (int j=0; j<ny; j++) {
-        //     for (int i=0; i<nx; ++i) {
-        //         printf("%.2f ", v[j*ny+i]);
-        //     }
-        //     printf("\n");
-        // }
-        // printf("\n");
-        // if (n==10) break;
 
         for (int it=0; it<nit; ++it) {
             cudaMemcpy(d_p, p, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
             cudaMemcpy(d_b, b, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
             cudaMemcpy(d_pn, p, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
-            calc_p<<<ny, nx>>>(d_u, d_v, d_p, d_b, d_pn, dx, dy, dt, rho, nu);
+            calc_p<<<ny, nx>>>(d_p, d_b, d_pn, dx, dy);
             cudaDeviceSynchronize();
             cudaMemcpy(p, d_p, ny*nx*sizeof(double), cudaMemcpyDeviceToHost);
         }
@@ -129,7 +121,7 @@ int main() {
         cudaMemcpy(d_p, p, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(d_un, u, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(d_vn, v, ny*nx*sizeof(double), cudaMemcpyHostToDevice);
-        calc_uv<<<ny, nx>>>(d_u, d_v, d_p, d_b, d_un, d_vn, dx, dy, dt, rho, nu);
+        calc_uv<<<ny, nx>>>(d_u, d_v, d_p, d_un, d_vn, dx, dy, dt, rho, nu);
         cudaDeviceSynchronize();
         cudaMemcpy(u, d_u, ny*nx*sizeof(double), cudaMemcpyDeviceToHost);
         cudaMemcpy(v, d_v, ny*nx*sizeof(double), cudaMemcpyDeviceToHost);
